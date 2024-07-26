@@ -1,0 +1,84 @@
+const express = require('express');
+const router = express.Router();
+const xlsx = require('xlsx');
+const multer = require('multer');
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+const connection = require('../db');
+//const sendPayrollMail = require('../EmailService/PayrollMail')
+
+router.post('/payroll', upload.single('file'), async (req, res) => {
+    const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    const employees = xlsx.utils.sheet_to_json(worksheet);
+    try {
+        connection.query('BEGIN');
+        for (var i = 0; i < employees.length; i++) {
+          const employee = employees[i];
+        //   const { name,email,salary} = employee;
+        
+          const query1 = 'INSERT INTO payroll (SNo,name,email,salary) VALUES (?,?,?,?)';
+          const results = await connection.query(query1,[employee.SNo,employee.name,employee.email,employee.salary]);
+  
+          //await sendPayrollMail( name, email, salary, date );
+  
+          console.log(results);
+        }
+        connection.query('COMMIT');
+        res.status(201).send(`Data inserted successfully`);
+  
+    } catch (error) {
+        console.error('Error inserting data:', error);
+        await connection.query('ROLLBACK');
+        res.status(500).send('Error inserting data');
+    }
+  
+});
+
+router.post('/payslips',upload.single('file'),async(req,res)=>{
+    const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    const employees = xlsx.utils.sheet_to_json(worksheet);
+    try{
+
+        connection.query('BEGIN');
+        for(var i=0;i<employees.length;i++){
+            const employee = employees[i];
+            const query = 'INSERT INTO payslips(Emp_Id,Month,Year,PayslipLink) VALUES (?,?,?,?)';
+            const results = await connection.query(query,[employee.Emp_Id,employee.Month,employee.Year,employee.PayslipLink]);
+            console.log(results);
+        }
+        connection.query('COMMIT');
+        res.status(201).send(`Data inserted successfully`);
+    }catch(error){
+        console.error('Error inserting data:', error);
+        await connection.query('ROLLBACK');
+        res.status(500).send('Error inserting data');
+  }
+});
+
+router.post('/empsalary', async (req, res) => {
+    const { Emp_Id, Month, Year, PayslipLink } = req.body;
+    const query = 'INSERT INTO payslips(Emp_Id,Month,Year,PayslipLink) VALUES (?,?,?,?)';
+    const results = await connection.query(query, [Emp_Id, Month, Year, PayslipLink]);
+    res.send(results);
+});
+
+router.get('/emp/:id', async (req, res) => {
+    const id = req.params.id;
+    const query = 'SELECT Month,Year,PayslipLink FROM payslips WHERE Emp_Id = ?';
+    const results = await connection.query(query, [id]);
+    res.send(results[0]);
+});
+
+router.get('/emp/:id/:month/:year', async (req, res) => {
+    const id = req.params.id;
+    const month = req.params.month;
+    const year = req.params.year;
+    const query = 'SELECT PayslipLink FROM payslips WHERE Emp_Id = ? AND Month = ? AND Year = ?';
+    const results = await connection.query(query, [id, month, year]);
+    res.send(results[0]);
+});
+
+
+module.exports = router;
