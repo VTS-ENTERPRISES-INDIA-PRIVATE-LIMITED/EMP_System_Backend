@@ -109,4 +109,10 @@ router.post("/savepayslips", async (req, res) => {
     }
   });
 
+  router.get('/getpayslips/:empid',async(req,res)=>{
+    const query = 'SELECT * FROM payslips WHERE empId = ?'
+    const payslips = await connection.query(query,[req.params.empid])
+    console.log(payslips[0])
+    res.send(payslips[0])
+  })
 module.exports = router;
