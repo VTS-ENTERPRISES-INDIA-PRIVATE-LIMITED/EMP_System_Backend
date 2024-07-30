@@ -1,5 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const cors = require('cors')
+
 require('./db')
 require('dotenv').config();
 
@@ -7,8 +9,8 @@ const admin = require('./Routes/adminRoutes');
 const app = express();
 
 app.use(bodyParser.json());
-
-const port = 4000;
+app.use(cors())
+const port = 5000;
 
 app.get('/test',(req,res)=>{
     res.send("Working");

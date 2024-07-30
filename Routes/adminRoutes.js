@@ -40,7 +40,6 @@ router.post('/payslips',upload.single('file'),async(req,res)=>{
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     const employees = xlsx.utils.sheet_to_json(worksheet);
     try{
-
         connection.query('BEGIN');
         for(var i=0;i<employees.length;i++){
             const employee = employees[i];
@@ -79,6 +78,35 @@ router.get('/emp/:id/:month/:year', async (req, res) => {
     const results = await connection.query(query, [id, month, year]);
     res.send(results[0]);
 });
-
+router.post("/savepayslips", async (req, res) => {
+    const { empId, payslipUrl } = req.body;
+    const date = new Date();
+    const month = date.toLocaleString('default', { month: 'long' });
+    const year = date.getFullYear();
+  
+    try {
+    //   const connection = await pool.getConnection();
+  
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS payslips (
+          empId VARCHAR(255),
+          month VARCHAR(255),
+          year INT,
+          url TEXT
+        )
+      `);
+  
+      await connection.query(`
+        INSERT INTO payslips (empId, month, year, url)
+        VALUES (?, ?, ?, ?)
+      `, [empId, month, year, payslipUrl]);
+  
+      
+      res.status(200).send('Payslip saved successfully');
+    } catch (error) {
+      console.error('Error saving payslip:', error);
+      res.status(500).send('Error saving payslip');
+    }
+  });
 
 module.exports = router;

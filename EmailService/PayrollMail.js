@@ -15,8 +15,6 @@ const sendPayrollMail = (name, email, salary, date) => {
     }
   };
 
-
-
   const mailbody = `
   <div>
     <div style="padding:10px;">
