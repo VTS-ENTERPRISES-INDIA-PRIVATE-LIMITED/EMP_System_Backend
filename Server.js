@@ -12,8 +12,8 @@ app.use(bodyParser.json());
 app.use(cors())
 const port = 5000;
 
-app.get('/test',(req,res)=>{
-    res.send("Working");
+app.get('/',(req,res)=>{
+    res.send("Hello Guru");
 });
 
 app.use('/admin',admin);
