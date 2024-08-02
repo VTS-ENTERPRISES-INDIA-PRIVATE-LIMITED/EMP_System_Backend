@@ -1,7 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require('cors')
-
+const employeeRoutes = require('./Routes/employeeRoutes')
 require('./db')
 require('dotenv').config();
 
@@ -15,7 +15,7 @@ const port = 5000;
 app.get('/',(req,res)=>{
     res.send("Hello Guru");
 });
-
+app.use('/emp',employeeRoutes)
 app.use('/admin',admin);
 
 app.listen(port,()=>{

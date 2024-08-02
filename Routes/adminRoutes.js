@@ -115,4 +115,52 @@ router.post("/savepayslips", async (req, res) => {
     console.log(payslips[0])
     res.send(payslips[0])
   })
+
+
+  //for emp data
+
+  router.post('/addempdata',async(req,res)=>{
+    try{
+      const createEmptable = `
+    CREATE TABLE IF NOT EXISTS employee (
+      empId VARCHAR(255),
+      Name VARCHAR(255),
+      email VARCHAR(255),
+      phone VARCHAR(255),
+      password VARCHAR(255),
+      role VARCHAR(255)
+    )
+    `
+    await connection.query(createEmptable)
+    
+   
+    const empdata = req.body
+    
+    for(var i=0;i<empdata.length;i++)
+    {
+      const {empId,name,email,phone,role} = empdata[i]
+      const query = `
+      INSERT INTO employee (empId,Name,email,phone,password,role) VALUES(?,?,?,?,?,?)
+    `
+    connection.query(query,[empId,name,email,phone,empId,role])
+    .then(resp=>console.log(`${name} added successfully`))
+    .catch(err=>console.log(`error occured with ${name}`))
+    }
+    res.send("Employee data added successfully")
+  }
+  catch(err){
+    console.log(err)
+    res.status(400).send("Error Adding Data")
+  }
+  })
+
+  router.post('/addemployee',async(req,res)=>{
+    const {empId,name,email,phone,role} = req.body
+    const query = `
+      INSERT INTO employee (empId,Name,email,phone,password,role) VALUES(?,?,?,?,?,?)
+    `
+    connection.query(query,[empId,name,email,phone,empId,"employee"])
+    .then(response=>res.send("Data added Successfully"))
+    .catch(err=>res.send(err))
+  })
 module.exports = router;
