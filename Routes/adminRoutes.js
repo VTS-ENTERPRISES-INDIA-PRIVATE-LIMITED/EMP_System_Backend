@@ -99,9 +99,7 @@ router.post("/savepayslips", async (req, res) => {
       await connection.query(`
         INSERT INTO payslips (empId, month, year, url)
         VALUES (?, ?, ?, ?)
-      `, [empId, month, year, payslipUrl]);
-  
-      
+      `, [empId, month, year, payslipUrl]); 
       res.status(200).send('Payslip saved successfully');
     } catch (error) {
       console.error('Error saving payslip:', error);
@@ -159,7 +157,7 @@ router.post("/savepayslips", async (req, res) => {
     const query = `
       INSERT INTO employee (empId,Name,email,phone,password,role) VALUES(?,?,?,?,?,?)
     `
-    connection.query(query,[empId,name,email,phone,empId,"employee"])
+    connection.query(query,[empId,name,email,phone,empId,role])
     .then(response=>res.send("Data added Successfully"))
     .catch(err=>res.send(err))
   })
