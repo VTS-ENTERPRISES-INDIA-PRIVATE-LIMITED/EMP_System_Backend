@@ -17,9 +17,15 @@ router.post('/apply', async (req, res) => {
 
 router.post('/delete/:id', async (req, res) => {
     const id = req.params.id
-    const query = "DELETE FROM leaves WHERE empId = ?"
-    await connection.query(query, [id])
-    res.send('Leave deleted successfully..!')
+    const q1 = "SELECT * FROM leaves WHERE leaveId = ?"
+    const lid = await connection.query(q1, [id])
+    if (lid[0].length) {
+        const query = "DELETE FROM leaves WHERE leaveId = ?"
+        await connection.query(query, [id])
+        res.send('Leave deleted successfully..!')
+    } else {
+        res.status(404).send("No leave found..!")
+    }
 })
 
 router.post('/approve', async (req, res)=>{
