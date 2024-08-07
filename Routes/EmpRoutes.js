@@ -37,9 +37,14 @@ catch(err){
 }
 })
   router.post('/viewEmp', async (req, res) => {
+    const dataList = []
     const query = "SELECT * FROM employee"
-    const data = await connection.query(query)
-    res.send(data)
+    const dataEmp = await connection.query(query)
+    for(var i = 0; i < dataEmp.length; i++) {
+      dataList[i] = dataEmp[i]
+    }
+    res.send({data : dataEmp[0]})
+    console.log(dataList)
   })
   router.post('/viewEmp/:id', async (req, res) => {
     const id = req.params.id
@@ -82,6 +87,18 @@ catch(err){
     else{
       res.status(404).send("Employee does not exist")
     }
+  })
+
+  router.post('/deleteNull', async (req, res)=>{
+    query1 = "SELECT * FROM employee"
+    query = `DELETE FROM employee WHERE trim(empId)="";`
+    await connection.query(query)
+    .then(async ()=>{
+      data = await connection.query(query1)
+      console.log(data)
+      res.send(data)
+     })
+    .catch((err)=>{res.send(err)})
   })
 
 module.exports = router;
