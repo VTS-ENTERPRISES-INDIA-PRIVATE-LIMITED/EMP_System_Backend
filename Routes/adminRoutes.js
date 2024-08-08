@@ -276,8 +276,6 @@ router.post('/logtimes', async (req, res) => {
   }
 });
 
-
-
 router.post('/logintime', async (req, res) => {
   try {
     const logs = 'CREATE TABLE IF NOT EXISTS logins (empId VARCHAR(255), date DATE, login TIME, isLoggedIn VARCHAR(255), loginDes VARCHAR(255))';
@@ -313,8 +311,6 @@ router.post('/logintime', async (req, res) => {
     res.status(500).send('Error inserting data');
   }
 });
-
-
 
 router.post('/logouttime', async (req, res) => {
   try {
@@ -352,7 +348,6 @@ router.post('/logouttime', async (req, res) => {
   }
 });
 
-
 // router.get('/emplogs/:id', async (req, res) => {
 //   const id = req.params.id;
 //   const logins = 'SELECT * FROM logins WHERE empId = ?';
@@ -360,7 +355,6 @@ router.post('/logouttime', async (req, res) => {
 //   const results = await connection.query(logins, [id], logouts, [id]);
 //   res.send(results);
 // });
-
 
 router.get('/emplogs/:id', async (req, res) => {
   const id = req.params.id;

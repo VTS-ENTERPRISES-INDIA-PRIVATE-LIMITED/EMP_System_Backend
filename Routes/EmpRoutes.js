@@ -19,11 +19,11 @@ router.post('/addEmp',async(req,res)=>{
   for(var i=0;i<empdata.length;i++)
   {
     console.log(empdata[i])
-    const {empId,Name,email,phone,password,role} = empdata[i]
+    const {empId,name,email,phone,password,role} = empdata[i]
     const query = `INSERT INTO employee (empId,Name,email,phone,password,role) VALUES(?,?,?,?,?,?)`
-    connection.query(query,[empId,Name,email,phone,password,role])
-    .then(resp=>console.log(`${Name} added successfully`))
-    .catch(err=>console.log(`error occured with ${Name}`))
+    connection.query(query,[empId,name,email,phone,password,role])
+    .then(resp=>console.log(`${name} added successfully`))
+    .catch(err=>console.log(`error occured with ${name}`))
   }
   res.send("Employee data added successfully")
 }
@@ -44,6 +44,12 @@ catch(err){
     const data = await connection.query(query, [id])
     res.send(data)
   })
+  router.post('/viewEmp/:email', async (req, res) => {
+    const email = req.params.email
+    const query = "SELECT * FROM employee WHERE email = ?"
+    const data = await connection.query(query, [email])
+    res.send(data[0].length>0)
+  })
 
   router.post('/updateEmp/:id', async (req, res) => {
     const id = req.params.id
@@ -54,7 +60,6 @@ catch(err){
       const email = req.body.editemail
       const phone = req.body.editphone
       const role = req.body.editrole
-      console.log(Name, email, phone, role);
       
       const query = "UPDATE employee SET Name = ?, email = ?, phone = ?, role = ? WHERE empId = ?"
       const updatedData = await connection.query(query, [Name, email, phone, role, id])
