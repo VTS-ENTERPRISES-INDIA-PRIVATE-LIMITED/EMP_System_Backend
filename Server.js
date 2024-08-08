@@ -3,10 +3,11 @@ const bodyParser = require("body-parser");
 const cors = require('cors')
 const employeeRoutes = require('./Routes/employeeRoutes')
 require('./db')
-// require('dotenv').config();
+require('dotenv').config();
 
 
 const admin = require('./Routes/adminRoutes');
+const leave = require('./Routes/leaveRoutes');
 const app = express();
 
 app.use(bodyParser.json());
@@ -18,6 +19,7 @@ app.get('/',(req,res)=>{
     res.send("Hello");
 });
 app.use('/emp',employeeRoutes)
+app.use('/leave',leave)
 app.use('/admin',admin);
 
 app.listen(port,()=>{

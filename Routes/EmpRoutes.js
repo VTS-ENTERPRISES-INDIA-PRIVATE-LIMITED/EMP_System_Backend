@@ -7,11 +7,11 @@ router.post('/addEmp',async(req,res)=>{
     const createEmptable = `
     CREATE TABLE IF NOT EXISTS employee (
     empId VARCHAR(255),
-    Name VARCHAR(255),
+    name VARCHAR(255),
     email VARCHAR(255),
     phone VARCHAR(255),
-    password VARCHAR(255),
-    role VARCHAR(255)
+    role VARCHAR(255),
+    leaveCount INT DEFAULT 10
   )
   `
   await connection.query(createEmptable)
@@ -19,11 +19,10 @@ router.post('/addEmp',async(req,res)=>{
   for(var i=0;i<empdata.length;i++)
   {
     console.log(empdata[i])
-    const {empId,Name,email,phone,password,role} = empdata[i]
-    const query = `INSERT INTO employee (empId,Name,email,phone,password,role) VALUES(?,?,?,?,?,?)`
-    connection.query(query,[empId,Name,email,phone,password,role])
-    .then(resp=>console.log(`${Name} added successfully`))
-    .catch(err=>console.log(`error occured with ${Name}`))
+    const {empId,Name,email,phone,password,role,leaveCount} = empdata[i]
+    const query = `INSERT INTO employee (empId,Name,email,phone,password,role,leaveCount) VALUES(?,?,?,?,?,?,?)`
+    connection.query(query,[empId,Name,email,phone,password,role,leaveCount])
+    
   }
   res.send("Employee data added successfully")
 }

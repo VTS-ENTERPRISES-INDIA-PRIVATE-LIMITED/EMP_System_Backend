@@ -119,7 +119,7 @@ router.post("/savepayslips", async (req, res) => {
     res.send(payslips[0])
   })
 
-  router.post('/addempdata',async(req,res)=>{
+  router.post('/addemp',async(req,res)=>{
     try{
       const createEmptable = `
     CREATE TABLE IF NOT EXISTS employee (
@@ -159,37 +159,57 @@ router.post("/savepayslips", async (req, res) => {
   }
   })
 
-  router.post('/addemployee',async(req,res)=>{
-    const {empId,name,email,phone,role} = req.body
-    const query = `
-      INSERT INTO employee (empId,Name,email,phone,password,role) VALUES(?,?,?,?,?,?)
-    `
-    connection.query(query,[empId,name,email,phone,empId,role,"employee"])
-    .then(res=>res.send("Data added Successfully"))
-    .catch(err=>res.send(err))
+router.post('/addempdata',async(req,res)=>{
+  try{
+    const Emp = ' CREATE TABLE IF NOT EXISTS employee ( empId VARCHAR(255),Name VARCHAR(255),email VARCHAR(255),phone VARCHAR(255),password VARCHAR(255),role VARCHAR(255),leavesTaken INT DEFAULT 0,leaveBalance INT DEFAULT 10,LeavesApproved INT DEFAULT 0,LeavesDeclined INT DEFAULT 0) '
+    connection.query(Emp)
+    const{empId,Name,email,phone,password,role} = req.body
+    const query = 'INSERT INTO employee (empId,Name,email,phone,password,role) VALUES(?,?,?,?,?,?)'
+    connection.query(query,[empId,Name,email,phone,password,role])
+    res.status(201).send(`Data added successfully`);
+}catch(error){
+    console.error('Error adding data:', error);
+    res.status(500).send('Error adding data');
+}
 });
 
-router.post('/leaveapprove/:id',async(req,res)=>{
 
-  try{
-    const id = req.params.id
-    const query = 'UPDATE leaves SET isApproved = true WHERE empId = ?'
-    connection.query(query,[id])
-    connection.query('COMMIT');
-    res.status(201).send(`Data updated successfully`);
-    if (wss && wss.clients.size > 0) {
-      wss.clients.forEach((client) => {
+router.post('/leaveapprove/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    let leaveBalance;
+    await connection.query('START TRANSACTION');
+    const [rows] = await connection.query('SELECT leaveBalance FROM employee WHERE empId = ?', [id]);
+    leaveBalance = rows[0]?.leaveBalance;
+    leaveBalance = parseInt(leaveBalance, 10);
+    if (leaveBalance <= 0) {
+      const query2 = 'UPDATE employee SET leavesTaken = leavesTaken + 1, leaveBalance = 0, LeavesDeclined = LeavesDeclined + 1 WHERE empId = ?';
+      await connection.query(query2, [id]);
+      await connection.query('COMMIT');
+      res.status(201).send('This employee dont have any leave left even if he/she takes then it comes under loss of pay.');
+    }else {
+      const query3 = 'UPDATE leaves SET approved = 1 WHERE empId = ?';
+      await connection.query(query3, [id]);
+      const query4 = 'UPDATE employee SET leaveBalance = leaveBalance - 1 , leavesTaken = leavesTaken + 1 , LeavesApproved = LeavesApproved + 1 WHERE empId = ? AND leaveBalance > 0';
+      await connection.query(query4, [id]);
+      await connection.query('COMMIT');
+      res.status(201).send('Data updated successfully');
+      if (wss && wss.clients.size > 0) {
+        wss.clients.forEach((client) => {
           if (client.readyState === WebSocket.OPEN) {
-              client.send("Leave Request Approved");
+            client.send('Leave Request Approved');
           }
-      });
-  }
- }catch(error){
+        });
+      }
+    }
+  } catch (error) {
     console.error('Error updating data:', error);
     await connection.query('ROLLBACK');
     res.status(500).send('Error updating data');
-}
+  }
 });
+
+
 
 // router.post('/logtimes',async(req,res)=>{
 //   try{
@@ -267,12 +287,12 @@ router.post('/logtimes', async (req, res) => {
     const query = 'INSERT INTO logs (empId, date, login, logout, isLoggedIn, loginDes, logoutDes) VALUES (?, ?, ?, ?, ?, ?, ?)';
     connection.query(query, [empId, formattedDate, formattedLoginTime, formattedLogoutTime, isLoggedIn.toString(), loginDes, logoutDes]);
     connection.query('COMMIT');
-    res.status(201).send('Data inserted successfully');
+    res.status(201).send('Successss');
 
   } catch (error) {
-    console.error('Error inserting data:', error);
+    console.error('Failed', error);
     connection.query('ROLLBACK');
-    res.status(500).send('Error inserting data');
+    res.status(500).send('Failed');
   }
 });
 
@@ -305,12 +325,12 @@ router.post('/logintime', async (req, res) => {
     const query = 'INSERT INTO logins (empId, date, login, isLoggedIn, loginDes) VALUES (?, ?, ?, ?, ?)';
     connection.query(query, [empId, formattedDate, formattedLoginTime, isLoggedIn.toString(), loginDes]);
     connection.query('COMMIT');
-    res.status(201).send('Data inserted successfully');
+    res.status(201).send('Logged in successfully');
 
   } catch (error) {
-    console.error('Error inserting data:', error);
+    console.error('Something went wrong', error);
     connection.query('ROLLBACK');
-    res.status(500).send('Error inserting data');
+    res.status(500).send('Something went wrong');
   }
 });
 
@@ -343,12 +363,12 @@ router.post('/logouttime', async (req, res) => {
     const query = 'INSERT INTO logouts (empId, date, logout, isLoggedIn, logoutDes) VALUES (?, ?, ?, ?, ?)';
     connection.query(query, [empId, formattedDate, formattedLogoutTime, isLoggedIn.toString(), logoutDes]);
     connection.query('COMMIT');
-    res.status(201).send('Data inserted successfully');
+    res.status(201).send('Logged out successfully');
 
   } catch (error) {
-    console.error('Error inserting data:', error);
+    console.error('Something went wrong', error);
     connection.query('ROLLBACK');
-    res.status(500).send('Error inserting data');
+    res.status(500).send('Something went wrong');
   }
 });
 
