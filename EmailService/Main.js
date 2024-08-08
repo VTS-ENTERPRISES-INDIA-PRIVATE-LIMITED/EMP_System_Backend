@@ -7,8 +7,8 @@ const mail = nodemailer.createTransport(
     secure : true,
     pool : true,
     auth: {
-      user: 'surarapuvagdevi@gmail.com',
-      pass: 'vqnx utjz yjac pasw'
+      user: 'tempabc70759@gmail.com',
+      pass: 'tmgagytlxgkvkgfp'
     }
   }
 )

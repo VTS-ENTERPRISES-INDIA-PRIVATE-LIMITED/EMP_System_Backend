@@ -4,6 +4,7 @@ const connection = require('../db');
 
 router.post('/apply', async (req, res) => {
     const { empId, Name, role, reason, leave_fdate, leave_tdate } = req.body
+    
     const tablequery = 'CREATE TABLE IF NOT EXISTS leaves ( leaveId int AUTO_INCREMENT PRIMARY KEY, empId varchar(20), Name varchar(30), role varchar(20), reason varchar(100), leave_fdate DATE, leave_tdate DATE, approved boolean default false, remark varchar(50) default NULL)';
     await connection.query(tablequery)
     const query = "INSERT INTO leaves (empId, Name, role, reason, leave_fdate, leave_tdate) VALUES (?, ?, ?, ?, ?, ?)"
@@ -15,14 +16,14 @@ router.post('/apply', async (req, res) => {
     }
 })
 
-router.post('/delete/:id', async (req, res) => {
-    const id = req.params.id
+router.post('/update', async (req, res) => {
+    const {leaveId, remark} = req.body
     const q1 = "SELECT * FROM leaves WHERE leaveId = ?"
-    const lid = await connection.query(q1, [id])
+    const lid = await connection.query(q1, [leaveId])
     if (lid[0].length) {
-        const query = "DELETE FROM leaves WHERE leaveId = ?"
-        await connection.query(query, [id])
-        res.send('Leave deleted successfully..!')
+        const query = "UPDATE leaves SET remark = ? WHERE leaveId = ?"
+        await connection.query(query, [remark, leaveId])
+        res.send('Leave Updated successfully..!')
     } else {
         res.status(404).send("No leave found..!")
     }
@@ -30,12 +31,18 @@ router.post('/delete/:id', async (req, res) => {
 
 router.post('/approve', async (req, res)=>{
     const {leaveId} = req.body
-    const query = "UPDATE leaves SET approved = 1 WHERE leaveId = ?"
-    const approve = await connection.query(query, [leaveId])
-    res.send('approved')
+    const q1 = "SELECT * FROM leaves WHERE leaveId = ?"
+    const lid = await connection.query(q1, [leaveId])
+    if (lid[0].length) {
+      const query = "UPDATE leaves SET approved = 1 WHERE leaveId = ?"
+      const approve = await connection.query(query, [leaveId])
+      res.send('approved')
+    } else {
+        res.status(404).send("No leave found..!")
+    }
 })
 
-router.post('/show', async (req, res) => {
+router.get('/show', async (req, res) => {
     const query = "SELECT * FROM leaves"
     const data = await connection.query(query)
     if (data[0].length) {
