@@ -14,9 +14,8 @@ app.use(bodyParser.json());
 app.use(cors())
 const port = 5000;
 
-
 app.get('/',(req,res)=>{
-    res.send("Hello");
+    res.send("Hello Guru");
 });
 app.use('/emp',employeeRoutes)
 app.use('/leave',leave)
