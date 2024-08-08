@@ -13,8 +13,22 @@ router.post('/login',(req,res)=>{
     console.log(req.body)
     const loginQuery = `SELECT * FROM employee WHERE empId = ? AND password = ?`
     connection.query(loginQuery,[empId,password])
-    .then(user=>res.send(user[0]))
+    .then(user=>{
+        console.log(user[0])
+        res.send(user[0])
+
+    })
     .catch(err=>res.status(400).send('Invalid Credentials'))
+})
+
+
+router.post("/sendotp",async (req,res)=>{
+    const {email} = req.body
+    const response = await sendOtpMail(email)
+    if(response)
+        res.send({otp:response})
+    else
+        res.send("error sending mail")
 })
 
 router.post('/resetpassword',(req,res)=>{
