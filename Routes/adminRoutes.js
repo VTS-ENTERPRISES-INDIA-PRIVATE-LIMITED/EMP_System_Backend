@@ -5,6 +5,9 @@ const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 const connection = require('../db');
+const WebSocket = require("ws");
+
+const wss = new WebSocket.Server({ port: 6000 });
 //const sendPayrollMail = require('../EmailService/PayrollMail')
 
 router.post('/payroll', upload.single('file'), async (req, res) => {
@@ -116,9 +119,6 @@ router.post("/savepayslips", async (req, res) => {
     res.send(payslips[0])
   })
 
-
-  //for emp data
-
   router.post('/addempdata',async(req,res)=>{
     try{
       const createEmptable = `
@@ -139,6 +139,11 @@ router.post("/savepayslips", async (req, res) => {
     for(var i=0;i<empdata.length;i++)
     {
       const {empId,name,email,phone,role} = empdata[i]
+      const userExists = await connection.query('SELECT * FROM employee WHERE empId = ?', [empId]);
+      if (userExists.length > 0) {
+        console.log(`${empId} already exists`);
+        continue;
+      }
       const query = `
       INSERT INTO employee (empId,Name,email,phone,password,role) VALUES(?,?,?,?,?,?)
     `
@@ -159,8 +164,218 @@ router.post("/savepayslips", async (req, res) => {
     const query = `
       INSERT INTO employee (empId,Name,email,phone,password,role) VALUES(?,?,?,?,?,?)
     `
-    connection.query(query,[empId,name,email,phone,empId,"employee"])
-    .then(response=>res.send("Data added Successfully"))
+    connection.query(query,[empId,name,email,phone,empId,role,"employee"])
+    .then(res=>res.send("Data added Successfully"))
     .catch(err=>res.send(err))
-  })
+});
+
+router.post('/leaveapprove/:id',async(req,res)=>{
+
+  try{
+    const id = req.params.id
+    const query = 'UPDATE leaves SET isApproved = true WHERE empId = ?'
+    connection.query(query,[id])
+    connection.query('COMMIT');
+    res.status(201).send(`Data updated successfully`);
+    if (wss && wss.clients.size > 0) {
+      wss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+              client.send("Leave Request Approved");
+          }
+      });
+  }
+ }catch(error){
+    console.error('Error updating data:', error);
+    await connection.query('ROLLBACK');
+    res.status(500).send('Error updating data');
+}
+});
+
+// router.post('/logtimes',async(req,res)=>{
+//   try{
+//     const logs = ' CREATE TABLE IF NOT EXISTS logs ( empId VARCHAR(255),date DATE,login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,logout TIMESTAMP DEFAULT CURRENT_TIMESTAMP,isLoggedIn VARCHAR(255),Des VARCHAR(255))'
+//     connection.query(logs)
+//     const{empId,date} = req.body
+//     if(login == "09:00:00"){
+//       isLoggedIn = true
+//     }else if(login > "09:00:00"){
+//       isLoggedIn = true
+//       Des = "Late Entry"
+//     }else{
+//       isLoggedIn = false
+//       Des = "Absent"
+//     }
+//     if(logout == "18:00:00"){
+//       isLoggedIn = false
+//     }else if(logout < "18:00:00"){
+//       isLoggedIn = true
+//       Des = "Early Exit"
+//     }else{
+//       isLoggedIn = false
+//       Des = "Absent"
+//     }
+//     const query = 'INSERT INTO logs (empId,date,login,logout,isLoggedIn,Desc) VALUES (?,?,?,?,?,?)'
+//     connection.query(query,[empId,date,login,logout,isLoggedIn,Desc])
+//     connection.query('COMMIT');
+//     res.status(201).send(`Data inserted successfully`);
+
+//   }catch(error){
+//     console.error('Error inserting data:', error);
+//     await connection.query('ROLLBACK');
+//     res.status(500).send('Error inserting data');
+//   }
+
+// });
+
+
+router.post('/logtimes', async (req, res) => {
+  try {
+    const logs = 'CREATE TABLE IF NOT EXISTS logs (empId VARCHAR(255), date DATE, login TIMESTAMP DEFAULT CURRENT_TIMESTAMP, logout TIMESTAMP DEFAULT CURRENT_TIMESTAMP, isLoggedIn VARCHAR(255), loginDes VARCHAR(255), logoutDes VARCHAR(255))';
+    connection.query(logs);
+
+    const { empId } = req.body;
+
+    const currentDate = new Date();
+
+    const formattedLoginTime = currentDate.toISOString().slice(0, 19).replace('T', ' ');
+    const formattedLogoutTime = currentDate.toISOString().slice(0, 19).replace('T', ' ');
+
+    let isLoggedIn, loginDes = '', logoutDes = '';
+
+    if (currentDate.getHours() === 9 && currentDate.getMinutes() === 0 && currentDate.getSeconds() === 0) {
+      isLoggedIn = true;
+    } else if (currentDate.getHours() > 9 || (currentDate.getHours() === 9 && (currentDate.getMinutes() > 0 || currentDate.getSeconds() > 0))) {
+      isLoggedIn = true;
+      loginDes = 'Late Entry';
+    } else {
+      isLoggedIn = false;
+      loginDes = 'Absent';
+    }
+
+    if (currentDate.getHours() === 18 && currentDate.getMinutes() === 0 && currentDate.getSeconds() === 0) {
+      isLoggedIn = false;
+    } else if (currentDate.getHours() < 18 || (currentDate.getHours() === 18 && (currentDate.getMinutes() < 0 || currentDate.getSeconds() < 0))) {
+      isLoggedIn = true;
+      logoutDes = 'Early Exit';
+    } else {
+      isLoggedIn = false;
+      logoutDes = 'Absent';
+    }
+
+    const formattedDate = currentDate.toISOString().split('T')[0];
+
+    const query = 'INSERT INTO logs (empId, date, login, logout, isLoggedIn, loginDes, logoutDes) VALUES (?, ?, ?, ?, ?, ?, ?)';
+    connection.query(query, [empId, formattedDate, formattedLoginTime, formattedLogoutTime, isLoggedIn.toString(), loginDes, logoutDes]);
+    connection.query('COMMIT');
+    res.status(201).send('Data inserted successfully');
+
+  } catch (error) {
+    console.error('Error inserting data:', error);
+    connection.query('ROLLBACK');
+    res.status(500).send('Error inserting data');
+  }
+});
+
+
+
+router.post('/logintime', async (req, res) => {
+  try {
+    const logs = 'CREATE TABLE IF NOT EXISTS logins (empId VARCHAR(255), date DATE, login TIME, isLoggedIn VARCHAR(255), loginDes VARCHAR(255))';
+    connection.query(logs);
+
+    const { empId } = req.body;
+
+    const currentDate = new Date();
+    const formattedLoginTime = currentDate.toTimeString().slice(0, 8);
+
+    let isLoggedIn, loginDes = '';
+
+    if (currentDate.getHours() === 9 && currentDate.getMinutes() === 0 && currentDate.getSeconds() === 0) {
+      isLoggedIn = true;
+    } else if (currentDate.getHours() > 9 || (currentDate.getHours() === 9 && (currentDate.getMinutes() > 0 || currentDate.getSeconds() > 0))) {
+      isLoggedIn = true;
+      loginDes = 'Late Entry';
+    } else {
+      isLoggedIn = false;
+      loginDes = 'Absent';
+    }
+
+    const formattedDate = currentDate.toISOString().split('T')[0];
+
+    const query = 'INSERT INTO logins (empId, date, login, isLoggedIn, loginDes) VALUES (?, ?, ?, ?, ?)';
+    connection.query(query, [empId, formattedDate, formattedLoginTime, isLoggedIn.toString(), loginDes]);
+    connection.query('COMMIT');
+    res.status(201).send('Data inserted successfully');
+
+  } catch (error) {
+    console.error('Error inserting data:', error);
+    connection.query('ROLLBACK');
+    res.status(500).send('Error inserting data');
+  }
+});
+
+
+
+router.post('/logouttime', async (req, res) => {
+  try {
+    const logs = 'CREATE TABLE IF NOT EXISTS logouts (empId VARCHAR(255), date DATE, logout TIME, isLoggedIn VARCHAR(255), logoutDes VARCHAR(255))';
+    connection.query(logs);
+
+    const { empId } = req.body;
+
+    const currentDate = new Date();
+    const formattedLogoutTime = currentDate.toTimeString().slice(0, 8);
+
+    let isLoggedIn, logoutDes = '';
+    if (currentDate.getHours() === 18 && currentDate.getMinutes() >= 0 && currentDate.getSeconds() >= 0) {
+      isLoggedIn = false;
+      logoutDes = 'Done for Today'
+    } else if (currentDate.getHours() < 18|| (currentDate.getHours() === 18 && (currentDate.getMinutes() < 0 || currentDate.getSeconds() < 0))) {
+      isLoggedIn = true;
+      logoutDes = 'Early Exit';
+    } else {
+      isLoggedIn = false;
+      logoutDes = 'Absent';
+    }
+
+    const formattedDate = currentDate.toISOString().split('T')[0];
+
+    const query = 'INSERT INTO logouts (empId, date, logout, isLoggedIn, logoutDes) VALUES (?, ?, ?, ?, ?)';
+    connection.query(query, [empId, formattedDate, formattedLogoutTime, isLoggedIn.toString(), logoutDes]);
+    connection.query('COMMIT');
+    res.status(201).send('Data inserted successfully');
+
+  } catch (error) {
+    console.error('Error inserting data:', error);
+    connection.query('ROLLBACK');
+    res.status(500).send('Error inserting data');
+  }
+});
+
+
+// router.get('/emplogs/:id', async (req, res) => {
+//   const id = req.params.id;
+//   const logins = 'SELECT * FROM logins WHERE empId = ?';
+//   const logouts = 'SELECT * FROM logouts WHERE empId = ?';
+//   const results = await connection.query(logins, [id], logouts, [id]);
+//   res.send(results);
+// });
+
+
+router.get('/emplogs/:id', async (req, res) => {
+  const id = req.params.id;
+  const logins = 'SELECT * FROM logins WHERE empId = ?';
+  const logouts = 'SELECT * FROM logouts WHERE empId = ?';
+  const [loginResults] = await connection.query(logins, [id]);
+  const [logoutResults] = await connection.query(logouts, [id]);
+
+  const empLogs = {
+    empId: id,
+    logins: loginResults,
+    logouts: logoutResults
+  };
+
+  res.send(empLogs);
+});
+
 module.exports = router;
