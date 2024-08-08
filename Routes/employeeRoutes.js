@@ -41,7 +41,6 @@ router.post('/resetpassword',(req,res)=>{
 
 router.post('/leaverequest',async(req,res)=>{
     try{
-         
       const query1 = 'CREATE TABLE IF NOT EXISTS leaves (empId VARCHAR(255),fromDate VARCHAR(255),toDate VARCHAR(255),reason VARCHAR(255),isApproved VARCHAR(255))'
       connection.query(query1)
       const {empId,fromDate,toDate,reason} = req.body
