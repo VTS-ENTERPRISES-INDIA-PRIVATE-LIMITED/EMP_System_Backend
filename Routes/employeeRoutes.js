@@ -1,7 +1,7 @@
 const connection = require('../db')
 const router = require('express').Router()
 const WebSocket = require("ws");
-
+const sendOtpMail = require('../EmailService/OtpService')
 const wss = new WebSocket.Server({ port: 8000 });
 
 // wss.on("connection", function connection(ws) {
@@ -22,13 +22,26 @@ router.post('/login',(req,res)=>{
 })
 
 
+router.post('/viewEmp/:email', async (req, res) => {
+    const email = req.params.email
+    const query = "SELECT * FROM employee WHERE email = ?"
+    const data = await connection.query(query, [email])
+    res.send(data[0].length>0)
+})
+
 router.post("/sendotp",async (req,res)=>{
     const {email} = req.body
-    const response = await sendOtpMail(email)
-    if(response)
-        res.send({otp:response})
-    else
-        res.send("error sending mail")
+    const query = 'SELECT * FROM employee WHERE email = ?'
+    const data = await connection.query(query, [email])
+    if (data[0].length) {
+        const response = await sendOtpMail(email)
+        if(response)
+            res.send({otp:response})
+        else
+            res.send("error sending mail")
+    } else {
+        res.status(404).send("No user found")
+    }
 })
 
 router.post('/resetpassword',(req,res)=>{

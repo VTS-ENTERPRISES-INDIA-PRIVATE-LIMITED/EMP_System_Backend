@@ -44,6 +44,12 @@ catch(err){
     const data = await connection.query(query, [id])
     res.send(data)
   })
+  router.post('/viewEmp/:email', async (req, res) => {
+    const email = req.params.email
+    const query = "SELECT * FROM employee WHERE email = ?"
+    const data = await connection.query(query, [email])
+    res.send(data[0].length>0)
+  })
 
   router.post('/updateEmp/:id', async (req, res) => {
     const id = req.params.id
