@@ -8,6 +8,7 @@ const wss = new WebSocket.Server({ port: 8000 });
 //     console.log("New client connected");
 // });
 
+
 router.post('/login',(req,res)=>{
     const {empId,password} = req.body
     console.log(req.body)
