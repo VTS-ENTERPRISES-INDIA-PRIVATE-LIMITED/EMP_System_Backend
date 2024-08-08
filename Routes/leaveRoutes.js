@@ -35,7 +35,7 @@ router.post('/approve', async (req, res)=>{
     res.send('approved')
 })
 
-router.post('/show', async (req, res) => {
+router.get('/show', async (req, res) => {
     const query = "SELECT * FROM leaves"
     const data = await connection.query(query)
     if (data[0].length) {
