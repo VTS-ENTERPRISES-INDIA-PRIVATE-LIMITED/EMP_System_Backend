@@ -1,5 +1,6 @@
 const connection = require('../db')
 const router = require('express').Router()
+const sendOtpMail = require('../EmailService/OtpService')
 
 router.post('/login',(req,res)=>{
     const {empId,password} = req.body
@@ -12,6 +13,16 @@ router.post('/login',(req,res)=>{
 
     })
     .catch(err=>res.status(400).send('Invalid Credentials'))
+})
+
+
+router.post("/sendotp",async (req,res)=>{
+    const {email} = req.body
+    const response = await sendOtpMail(email)
+    if(response)
+        res.send({otp:response})
+    else
+        res.send("error sending mail")
 })
 
 router.post('/resetpassword',(req,res)=>{

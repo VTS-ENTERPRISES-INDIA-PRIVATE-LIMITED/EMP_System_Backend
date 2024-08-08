@@ -5,12 +5,14 @@ const employeeRoutes = require('./Routes/employeeRoutes')
 require('./db')
 require('dotenv').config();
 
+
 const admin = require('./Routes/adminRoutes');
 const app = express();
 
 app.use(bodyParser.json());
 app.use(cors())
 const port = 5000;
+
 
 app.get('/',(req,res)=>{
     res.send("Hello Guru");
