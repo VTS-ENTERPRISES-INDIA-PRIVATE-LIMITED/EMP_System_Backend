@@ -406,17 +406,25 @@ router.post('/viewEmp', async (req, res) => {
   const dataEmp = await connection.query(query)
   res.send(dataEmp[0])
 })
-router.post('/viewEmp/:email', async (req, res) => {
+router.post('/exist/:email', async (req, res) => {
   const email = req.params.email
   const query = "SELECT * FROM employee WHERE email = ?"
   const data = await connection.query(query, [email])
   res.send(data[0].length > 0)
 })
+
+router.post('/viewEmp/:id', async (req, res) => {
+  const empId = req.params.id
+  const query = "SELECT * FROM employee WHERE empId = ?"
+  const data = await connection.query(query, [empId])
+  res.send(data)
+})
+
 router.post('/updateEmp/:id', async (req, res) => {
   const id = req.params.id
   const query1 = "SELECT * FROM employee WHERE empId = ?"
   const existId = await connection.query(query1, [id])
-  console.log(req.body)
+  console.log(id)
   if(existId[0].length){
     const Name = req.body.editName
     const email = req.body.editemail
