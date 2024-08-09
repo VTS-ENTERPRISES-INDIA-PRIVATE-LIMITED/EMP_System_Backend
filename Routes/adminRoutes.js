@@ -420,6 +420,9 @@ router.post('/viewEmp/:id', async (req, res) => {
   res.send(data)
 })
 
+
+  const commit = "this is for ravi"
+  
 router.post('/updateEmp/:id', async (req, res) => {
   const id = req.params.id
   const query1 = "SELECT * FROM employee WHERE empId = ?"
