@@ -9,34 +9,39 @@ const sendOtpMail = require('../EmailService/OtpService')
 // });
 
 
-router.post('/login',(req,res)=>{
-    const {empId,password} = req.body
-    console.log(req.body)
+router.post('/login', (req, res) => {
+    const { empId, password } = req.body
+    // console.log(req.body)
     const loginQuery = `SELECT * FROM employee WHERE empId = ? AND password = ?`
-    connection.query(loginQuery,[empId,password])
-    .then(user=>{
-        console.log(user[0])
-        res.send(user[0])
-
-    })
-    .catch(err=>res.status(400).send('Invalid Credentials'))
+    connection.query(loginQuery, [empId, password])
+        .then(user => {
+            if (user[0].length > 0) {
+                console.log("the user " ,user[0])
+                
+                res.send({userdata:user[0],status:200})
+            }
+            else {
+                res.send({message:"Invalid Credentials",status:404})
+            }
+        })
+        .catch(err => res.send({message:"Invalid Credentials",status:404}))
 })
 
-router.post("/sendotp",async (req,res)=>{
-    const {email} = req.body
+router.post("/sendotp", async (req, res) => {
+    const { email } = req.body
     const response = await sendOtpMail(email)
-    if(response)
-        res.send({otp:response})
+    if (response)
+        res.send({ otp: response })
     else
         res.send("error sending mail")
 })
 
-router.post('/resetpassword',(req,res)=>{
-    const {email,password} = req.body
-    const query =  'UPDATE employee SET password = ? WHERE email = ?'
-    connection.query(query,[password,email])
-    .then((resp)=>res.send("Password Reset Successful"))
-    .catch((err)=>res.status(400).send("Failed to reset password"))
+router.post('/resetpassword', (req, res) => {
+    const { email, password } = req.body
+    const query = 'UPDATE employee SET password = ? WHERE email = ?'
+    connection.query(query, [password, email])
+        .then((resp) => res.send("Password Reset Successful"))
+        .catch((err) => res.status(400).send("Failed to reset password"))
 });
 
 // router.post('/leaverequest',async(req,res)=>{
