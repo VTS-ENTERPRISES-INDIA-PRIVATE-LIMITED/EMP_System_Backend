@@ -2,7 +2,7 @@ const connection = require('../db')
 const router = require('express').Router()
 const WebSocket = require("ws");
 const sendOtpMail = require('../EmailService/OtpService')
-const wss = new WebSocket.Server({ port: 8000 });
+//const wss = new WebSocket.Server({ port: 8000 });
 // const wss = new WebSocket.Server({ port: 8000 });
 
 // wss.on("connection", function connection(ws) {
@@ -40,28 +40,29 @@ router.post('/resetpassword',(req,res)=>{
     .catch((err)=>res.status(400).send("Failed to reset password"))
 });
 
-router.post('/leaverequest',async(req,res)=>{
-    try{
-      const query1 = 'CREATE TABLE IF NOT EXISTS leaves (empId VARCHAR(255),fromDate VARCHAR(255),toDate VARCHAR(255),reason VARCHAR(255),isApproved VARCHAR(255))'
-      connection.query(query1)
-      const {empId,fromDate,toDate,reason} = req.body
-      const query = 'INSERT INTO leaves(empId,fromDate,toDate,reason,isApproved) VALUES (?,?,?,?,?)'
-      connection.query(query,[empId,fromDate,toDate,reason,false])
-      connection.query('COMMIT');
-      res.status(201).send(`Data inserted successfully`);
-      if (wss && wss.clients.size > 0) {
-        wss.clients.forEach((client) => {
-            if (client.readyState === WebSocket.OPEN) {
-                client.send("New Leave Request");
-            }
-        });
-    }
-    }catch(error){
-        console.error('Error inserting data:', error);
-        await connection.query('ROLLBACK');
-        res.status(500).send('Error inserting data');
-    }
-});
+// router.post('/leaverequest',async(req,res)=>{
+//     try{
+//       const query1 = 'CREATE TABLE IF NOT EXISTS leaves (empId VARCHAR(255),fromDate VARCHAR(255),toDate VARCHAR(255),reason VARCHAR(255),isApproved VARCHAR(255))'
+//       connection.query(query1)
+//       const {empId,fromDate,toDate,reason} = req.body
+//       const query = 'INSERT INTO leaves(empId,fromDate,toDate,reason,isApproved) VALUES (?,?,?,?,?)'
+//       connection.query(query,[empId,fromDate,toDate,reason,false])
+//       connection.query('COMMIT');
+//       res.status(201).send(`Data inserted successfully`);
+//       if (wss && wss.clients.size > 0) {
+//         wss.clients.forEach((client) => {
+//             if (client.readyState === WebSocket.OPEN) {
+//                 client.send("New Leave Request");
+//             }
+//         });
+//     }
+//     }catch(error){
+//         console.error('Error inserting data:', error);
+//         await connection.query('ROLLBACK');
+//         res.status(500).send('Error inserting data');
+//     }
+
+// });
 
 
 module.exports = router

@@ -119,53 +119,60 @@ router.post("/savepayslips", async (req, res) => {
     res.send(payslips[0])
   })
 
-  router.post('/addemp',async(req,res)=>{
-    try{
-      const createEmptable = `
-    CREATE TABLE IF NOT EXISTS employee (
-      empId VARCHAR(255),
-      Name VARCHAR(255),
-      email VARCHAR(255),
-      phone VARCHAR(255),
-      password VARCHAR(255),
-      role VARCHAR(255)
-    )
-    `
-    await connection.query(createEmptable)
+  // router.post('/addemp',async(req,res)=>{
+  //   try{
+  //     const createEmptable = `
+  //   CREATE TABLE IF NOT EXISTS employee (
+  //     empId VARCHAR(255),
+  //     Name VARCHAR(255),
+  //     email VARCHAR(255),
+  //     phone VARCHAR(255),
+  //     password VARCHAR(255),
+  //     role VARCHAR(255)
+  //   )
+  //   `
+  //   await connection.query(createEmptable)
     
    
-    const empdata = req.body
+  //   const empdata = req.body
     
-    for(var i=0;i<empdata.length;i++)
-    {
-      const {empId,name,email,phone,role} = empdata[i]
-      const userExists = await connection.query('SELECT * FROM employee WHERE empId = ?', [empId]);
-      if (userExists.length > 0) {
-        console.log(`${empId} already exists`);
-        continue;
-      }
-      const query = `
-      INSERT INTO employee (empId,Name,email,phone,password,role) VALUES(?,?,?,?,?,?)
-    `
-    connection.query(query,[empId,name,email,phone,empId,role])
-    .then(resp=>console.log(`${name} added successfully`))
-    .catch(err=>console.log(`error occured with ${name}`))
-    }
-    res.send("Employee data added successfully")
-  }
-  catch(err){
-    console.log(err)
-    res.status(400).send("Error Adding Data")
-  }
-  })
+  //   for(var i=0;i<empdata.length;i++)
+  //   {
+  //     const {empId,name,email,phone,role} = empdata[i]
+  //     const userExists = await connection.query('SELECT * FROM employee WHERE empId = ?', [empId]);
+  //     if (userExists.length > 0) {
+  //       console.log(`${empId} already exists`);
+  //       continue;
+  //     }
+  //     const query = `
+  //     INSERT INTO employee (empId,Name,email,phone,password,role) VALUES(?,?,?,?,?,?)
+  //   `
+  //   connection.query(query,[empId,name,email,phone,empId,role])
+  //   .then(resp=>console.log(`${name} added successfully`))
+  //   .catch(err=>console.log(`error occured with ${name}`))
+  //   }
+  //   res.send("Employee data added successfully")
+  // }
+  // catch(err){
+  //   console.log(err)
+  //   res.status(400).send("Error Adding Data")
+  // }
+  // })
 
 router.post('/addempdata',async(req,res)=>{
   try{
-    const Emp = ' CREATE TABLE IF NOT EXISTS employee ( empId VARCHAR(255),Name VARCHAR(255),email VARCHAR(255),phone VARCHAR(255),password VARCHAR(255),role VARCHAR(255),leavesTaken INT DEFAULT 0,leaveBalance INT DEFAULT 10,LeavesApproved INT DEFAULT 0,LeavesDeclined INT DEFAULT 0) '
+    const Emp = ' CREATE TABLE IF NOT EXISTS employee ( empId VARCHAR(255),Name VARCHAR(255),email VARCHAR(255),phone VARCHAR(255),password VARCHAR(255),role VARCHAR(255),workMode VARCHAR(255),leavesTaken INT DEFAULT 0,leaveBalance INT DEFAULT 10,LeavesApproved INT DEFAULT 0,LeavesDeclined INT DEFAULT 0) '
     connection.query(Emp)
-    const{empId,Name,email,phone,password,role} = req.body
-    const query = 'INSERT INTO employee (empId,Name,email,phone,password,role) VALUES(?,?,?,?,?,?)'
-    connection.query(query,[empId,Name,email,phone,password,role])
+    const{empId,Name,email,phone,password,role,workMode} = req.body
+    // const userQuery = 'SELECT empId FROM employee WHERE empId = ?'
+    // const userExists = await connection.query(userQuery, [empId]);
+    // if (userExists.length > 0) {
+    //   console.log(`${empId} already exists`);
+    //   res.status(400).send('User already exists');
+    //   return;
+    // }
+    const query = 'INSERT INTO employee (empId,Name,email,phone,password,role,workMode) VALUES(?,?,?,?,?,?,?)'
+    connection.query(query,[empId,Name,email,phone,password,role,workMode])
     res.status(201).send(`Data added successfully`);
 }catch(error){
     console.error('Error adding data:', error);
