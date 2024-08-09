@@ -159,25 +159,40 @@ router.post("/savepayslips", async (req, res) => {
   // }
   // })
 
-router.post('/addempdata',async(req,res)=>{
-  try{
-    const Emp = ' CREATE TABLE IF NOT EXISTS employee ( empId VARCHAR(255),Name VARCHAR(255),email VARCHAR(255),phone VARCHAR(255),password VARCHAR(255),role VARCHAR(255),workMode VARCHAR(255),leavesTaken INT DEFAULT 0,leaveBalance INT DEFAULT 10,LeavesApproved INT DEFAULT 0,LeavesDeclined INT DEFAULT 0) '
-    connection.query(Emp)
-    const{empId,Name,email,phone,password,role,workMode} = req.body
-    // const userQuery = 'SELECT empId FROM employee WHERE empId = ?'
-    // const userExists = await connection.query(userQuery, [empId]);
-    // if (userExists.length > 0) {
-    //   console.log(`${empId} already exists`);
-    //   res.status(400).send('User already exists');
-    //   return;
-    // }
-    const query = 'INSERT INTO employee (empId,Name,email,phone,password,role,workMode) VALUES(?,?,?,?,?,?,?)'
-    connection.query(query,[empId,Name,email,phone,password,role,workMode])
-    res.status(201).send(`Data added successfully`);
-}catch(error){
-    console.error('Error adding data:', error);
-    res.status(500).send('Error adding data');
-}
+// router.post('/addempdata',async(req,res)=>{
+//   try{
+//     const Emp = ' CREATE TABLE IF NOT EXISTS employee ( empId VARCHAR(255),Name VARCHAR(255),email VARCHAR(255),phone VARCHAR(255),password VARCHAR(255),role VARCHAR(255),workMode VARCHAR(255),leavesTaken INT DEFAULT 0,leaveBalance INT DEFAULT 10,LeavesApproved INT DEFAULT 0,LeavesDeclined INT DEFAULT 0) '
+//     connection.query(Emp)
+//     const{empId,Name,email,phone,password,role,workMode} = req.body
+//     const query = 'INSERT INTO employee (empId,Name,email,phone,password,role,workMode) VALUES(?,?,?,?,?,?,?)'
+//     connection.query(query,[empId,Name,email,phone,password,role,workMode])
+//     res.status(201).send(`Data added successfully`);
+// }catch(error){
+//     console.error('Error adding data:', error);
+//     res.status(500).send('Error adding data');
+// }
+// });
+
+
+router.post('/addempdata', async (req, res) => {
+  try {
+      const Emp = 'CREATE TABLE IF NOT EXISTS employee ( empId VARCHAR(255),Name VARCHAR(255),email VARCHAR(255),phone VARCHAR(255),password VARCHAR(255),role VARCHAR(255),workMode VARCHAR(255),leavesTaken INT DEFAULT 0,leaveBalance INT DEFAULT 10,LeavesApproved INT DEFAULT 0,LeavesDeclined INT DEFAULT 0) ';
+      await connection.query(Emp);
+      const { empId, Name, email, phone, password, role, workMode } = req.body;
+      const query = 'SELECT * FROM employee WHERE empId = ?';
+      const [existingEmps] = await connection.query(query, [empId]);
+
+      if (existingEmps.length > 0) {
+          res.status(400).send(`Employee with empId ${empId} already exists`);
+      } else {
+          const insertQuery = 'INSERT INTO employee (empId,Name,email,phone,password,role,workMode) VALUES(?,?,?,?,?,?,?)';
+          await connection.query(insertQuery, [empId, Name, email, phone, password, role, workMode]);
+          res.status(201).send(`Data added successfully`);
+      }
+  } catch (error) {
+      console.error('Error adding data:', error);
+      res.status(500).send('Error adding data');
+  }
 });
 
 
@@ -326,12 +341,18 @@ router.post('/logintime', async (req, res) => {
     }
 
     const formattedDate = currentDate.toISOString().split('T')[0];
+    let date;
+    const q = 'SELECT isLoggedIn FROM logins WHERE empId = ? AND date = ?';
+    [date] = await connection.query(q, [empId, formattedDate]);
 
-    const query = 'INSERT INTO logins (empId, date, login, isLoggedIn, loginDes) VALUES (?, ?, ?, ?, ?)';
-    connection.query(query, [empId, formattedDate, formattedLoginTime, isLoggedIn.toString(), loginDes]);
-    connection.query('COMMIT');
-    res.status(201).send('Logged in successfully');
-
+    if (date[0].isLoggedIn === 'true') {
+      res.status(400).send(`You are already logged in on ${formattedDate}`);
+    }else{
+      const query = 'INSERT INTO logins (empId, date, login, isLoggedIn, loginDes) VALUES (?, ?, ?, ?, ?)';
+      connection.query(query, [empId, formattedDate, formattedLoginTime, isLoggedIn.toString(), loginDes]);
+      connection.query('COMMIT');
+      res.status(201).send('Logged in successfully');
+    }
   } catch (error) {
     console.error('Something went wrong', error);
     connection.query('ROLLBACK');
@@ -341,7 +362,7 @@ router.post('/logintime', async (req, res) => {
 
 router.post('/logouttime', async (req, res) => {
   try {
-    const logs = 'CREATE TABLE IF NOT EXISTS logouts (empId VARCHAR(255), date DATE, logout TIME, isLoggedIn VARCHAR(255), logoutDes VARCHAR(255))';
+    const logs = 'CREATE TABLE IF NOT EXISTS logouts (empId VARCHAR(255), date DATE, logout TIME, isLoggedIn VARCHAR(255) DEFAULT false, logoutDes VARCHAR(255))';
     connection.query(logs);
 
     const { empId } = req.body;
@@ -353,7 +374,7 @@ router.post('/logouttime', async (req, res) => {
     if (currentDate.getHours() === 18 && currentDate.getMinutes() >= 0 && currentDate.getSeconds() >= 0) {
       isLoggedIn = false;
       logoutDes = 'Done for Today'
-    } else if (currentDate.getHours() < 18|| (currentDate.getHours() === 18 && (currentDate.getMinutes() < 0 || currentDate.getSeconds() < 0))) {
+    } else if (currentDate.getHours() < 18|| (currentDate.getHours() === 0 && (currentDate.getMinutes() < 0 || currentDate.getSeconds() < 0))) {
       isLoggedIn = true;
       logoutDes = 'Early Exit';
     } else {
@@ -362,12 +383,18 @@ router.post('/logouttime', async (req, res) => {
     }
 
     const formattedDate = currentDate.toISOString().split('T')[0];
+    let date;
+    const q = 'SELECT isLoggedIn FROM logouts WHERE empId = ? AND date = ?';
+    [date] = await connection.query(q, [empId, formattedDate]);
 
-    const query = 'INSERT INTO logouts (empId, date, logout, isLoggedIn, logoutDes) VALUES (?, ?, ?, ?, ?)';
-    connection.query(query, [empId, formattedDate, formattedLogoutTime, isLoggedIn.toString(), logoutDes]);
-    connection.query('COMMIT');
-    res.status(201).send('Logged out successfully');
-
+    if(date[0].isLoggedIn !=='false') {
+      res.status(400).send(`You are already logged out on ${formattedDate}`);
+    }else{
+      const query = 'INSERT INTO logouts (empId, date, logout, isLoggedIn, logoutDes) VALUES (?, ?, ?, ?, ?)';
+      connection.query(query, [empId, formattedDate, formattedLogoutTime, isLoggedIn.toString(), logoutDes]);
+      connection.query('COMMIT');
+      res.status(201).send('Logged out successfully');
+    }
   } catch (error) {
     console.error('Something went wrong', error);
     connection.query('ROLLBACK');

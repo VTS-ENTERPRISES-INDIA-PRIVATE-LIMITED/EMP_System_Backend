@@ -19,13 +19,13 @@ router.post('/apply', async (req, res) => {
         res.send("Leave applied...!")
         if (wss && wss.clients.size > 0) {
             wss.clients.forEach((client) => {
-                if (client.readyState === WebSocket.OPEN) {
-                    client.send("New Leave Request");
-                }
-            });
-        }
+              if (client.readyState === WebSocket.OPEN) {
+                client.send("New Leave Request");
+            }
+        });
+      }
     }
-})
+});
 
 router.post('/update', async (req, res) => {
     const {leaveId, remark} = req.body
