@@ -416,6 +416,7 @@ router.post('/updateEmp/:id', async (req, res) => {
   const id = req.params.id
   const query1 = "SELECT * FROM employee WHERE empId = ?"
   const existId = await connection.query(query1, [id])
+  console.log(req.body)
   if(existId[0].length){
     const Name = req.body.editName
     const email = req.body.editemail
@@ -426,6 +427,7 @@ router.post('/updateEmp/:id', async (req, res) => {
     const updatedData = await connection.query(query, [Name, email, phone, role, id])
     const existId = await connection.query(query1, [id])
     if(updatedData[0].affectedRows) {
+      console.log(existId)
       res.status(200).send({message:"User Updated Successfully...!", data:existId[0]} )
     } else {
       res.status(500).send("Error occured..!")
@@ -434,6 +436,7 @@ router.post('/updateEmp/:id', async (req, res) => {
     res.status(404).send("Employee does not exist")
   }
 })
+
 router.post('/deleteEmp/:id', async (req, res)=>{
   const id = req.params.id
   const query1 = "SELECT * FROM employee WHERE empId = ?"
