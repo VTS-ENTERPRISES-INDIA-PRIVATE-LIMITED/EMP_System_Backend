@@ -1,8 +1,8 @@
 const connection = require('../db')
 const router = require('express').Router()
-const WebSocket = require("ws");
+// const WebSocket = require("ws");
 
-const wss = new WebSocket.Server({ port: 8000 });
+// const wss = new WebSocket.Server({ port: 8000 });
 
 // wss.on("connection", function connection(ws) {
 //     console.log("New client connected");
@@ -49,13 +49,13 @@ router.post('/leaverequest',async(req,res)=>{
       connection.query(query,[empId,fromDate,toDate,reason,false])
       connection.query('COMMIT');
       res.status(201).send(`Data inserted successfully`);
-      if (wss && wss.clients.size > 0) {
-        wss.clients.forEach((client) => {
-            if (client.readyState === WebSocket.OPEN) {
-                client.send("New Leave Request");
-            }
-        });
-    }
+    //   if (wss && wss.clients.size > 0) {
+    //     wss.clients.forEach((client) => {
+    //         if (client.readyState === WebSocket.OPEN) {
+    //             client.send("New Leave Request");
+    //         }
+    //     });
+    // }
     }catch(error){
         console.error('Error inserting data:', error);
         await connection.query('ROLLBACK');
