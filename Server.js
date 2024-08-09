@@ -5,13 +5,8 @@ const employeeRoutes = require('./Routes/employeeRoutes')
 require('./db')
 require('dotenv').config();
 
-<<<<<<< HEAD
-const admin = require('./Routes/adminRoutes');
-// const admin = require('./Routes/EmpRoutes');
-=======
 
 const admin = require('./Routes/adminRoutes');
->>>>>>> e2cf5679e6d830205b5f4041dc1211def48d4079
 const leave = require('./Routes/leaveRoutes');
 const app = express();
 
