@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const connection = require('../db');
+const WebSocket = require("ws");
+
+const wss = new WebSocket.Server({ port: 8000 });
+//const wss2 = new WebSocket.Server({ port: 6000 });
 
 router.post('/apply', async (req, res) => {
     const { empId, Name, role, reason, leave_fdate, leave_tdate } = req.body
@@ -10,9 +14,16 @@ router.post('/apply', async (req, res) => {
     const query = "INSERT INTO leaves (empId, Name, role, reason, leave_fdate, leave_tdate) VALUES (?, ?, ?, ?, ?, ?)"
     const data2 = await connection.query(query, [empId, Name, role, reason, leave_fdate, leave_tdate])
     if (data2[0].length) {
-        res.send("some thing went wrong :(")
+        res.send("something went wrong :(")
     } else {
         res.send("Leave applied...!")
+        if (wss && wss.clients.size > 0) {
+            wss.clients.forEach((client) => {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send("New Leave Request");
+                }
+            });
+        }
     }
 })
 
@@ -29,18 +40,19 @@ router.post('/update', async (req, res) => {
     }
 })
 
-router.post('/approve', async (req, res)=>{
-    const {leaveId} = req.body
-    const q1 = "SELECT * FROM leaves WHERE leaveId = ?"
-    const lid = await connection.query(q1, [leaveId])
-    if (lid[0].length) {
-      const query = "UPDATE leaves SET approved = 1 WHERE leaveId = ?"
-      const approve = await connection.query(query, [leaveId])
-      res.send('approved')
-    } else {
-        res.status(404).send("No leave found..!")
-    }
-})
+// router.post('/approve', async (req, res)=>{
+//     const {empId} = req.body
+//     const query = "UPDATE leaves SET approved = 1 WHERE empId = ?"
+//     const approve = await connection.query(query, [empId])
+//     res.send('approved')
+//     if (wss2 && wss2.clients.size > 0) {
+//         wss2.clients.forEach((client) => {
+//             if (client.readyState === WebSocket.OPEN) {
+//                 client.send("Your Leave Request was Approved");
+//             }
+//         });
+//     }
+// })
 
 router.get('/show', async (req, res) => {
     const query = "SELECT * FROM leaves"
