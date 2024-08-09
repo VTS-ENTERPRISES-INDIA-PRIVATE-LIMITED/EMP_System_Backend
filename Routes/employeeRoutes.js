@@ -3,7 +3,6 @@ const router = require('express').Router()
 const WebSocket = require("ws");
 const sendOtpMail = require('../EmailService/OtpService')
 //const wss = new WebSocket.Server({ port: 8000 });
-// const wss = new WebSocket.Server({ port: 8000 });
 
 // wss.on("connection", function connection(ws) {
 //     console.log("New client connected");
