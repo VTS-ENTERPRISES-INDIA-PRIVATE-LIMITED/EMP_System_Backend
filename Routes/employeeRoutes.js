@@ -22,27 +22,13 @@ router.post('/login',(req,res)=>{
     .catch(err=>res.status(400).send('Invalid Credentials'))
 })
 
-
-router.post('/viewEmp/:email', async (req, res) => {
-    const email = req.params.email
-    const query = "SELECT * FROM employee WHERE email = ?"
-    const data = await connection.query(query, [email])
-    res.send(data[0].length>0)
-})
-
 router.post("/sendotp",async (req,res)=>{
     const {email} = req.body
-    const query = 'SELECT * FROM employee WHERE email = ?'
-    const data = await connection.query(query, [email])
-    if (data[0].length) {
-        const response = await sendOtpMail(email)
-        if(response)
-            res.send({otp:response})
-        else
-            res.send("error sending mail")
-    } else {
-        res.status(404).send("No user found")
-    }
+    const response = await sendOtpMail(email)
+    if(response)
+        res.send({otp:response})
+    else
+        res.send("error sending mail")
 })
 
 router.post('/resetpassword',(req,res)=>{
@@ -74,7 +60,6 @@ router.post('/leaverequest',async(req,res)=>{
         await connection.query('ROLLBACK');
         res.status(500).send('Error inserting data');
     }
-
 });
 
 

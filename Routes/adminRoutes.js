@@ -372,4 +372,70 @@ router.get('/emplogs/:id', async (req, res) => {
   res.send(empLogs);
 });
 
+// emp- routes
+
+router.post('/viewEmp', async (req, res) => {
+  const query = "SELECT * FROM employee"
+  const dataEmp = await connection.query(query)
+  res.send(dataEmp[0])
+})
+router.post('/viewEmp/:email', async (req, res) => {
+  const email = req.params.email
+  const query = "SELECT * FROM employee WHERE email = ?"
+  const data = await connection.query(query, [email])
+  res.send(data[0].length > 0)
+})
+router.post('/updateEmp/:id', async (req, res) => {
+  const id = req.params.id
+  const query1 = "SELECT * FROM employee WHERE empId = ?"
+  const existId = await connection.query(query1, [id])
+  if(existId[0].length){
+    const Name = req.body.editName
+    const email = req.body.editemail
+    const phone = req.body.editphone
+    const role = req.body.editrole
+    
+    const query = "UPDATE employee SET Name = ?, email = ?, phone = ?, role = ? WHERE empId = ?"
+    const updatedData = await connection.query(query, [Name, email, phone, role, id])
+    const existId = await connection.query(query1, [id])
+    if(updatedData[0].affectedRows) {
+      res.status(200).send({message:"User Updated Successfully...!", data:existId[0]} )
+    } else {
+      res.status(500).send("Error occured..!")
+    }
+  } else{
+    res.status(404).send("Employee does not exist")
+  }
+})
+router.post('/deleteEmp/:id', async (req, res)=>{
+  const id = req.params.id
+  const query1 = "SELECT * FROM employee WHERE empId = ?"
+  const existId = await connection.query(query1, [id])
+  
+  if(existId[0].length){
+    const query = "DELETE FROM employee WHERE empId = ?"
+    const deletedData = await connection.query(query, [id])
+    if(deletedData[0].affectedRows){
+      res.status(200).send("User deleted successfully")
+    }
+    else{
+      res.status(500).send("Error occured")
+    }
+  }
+  else{
+    res.status(404).send("Employee does not exist")
+  }
+})
+router.post('/deleteNull', async (req, res)=>{
+  query1 = "SELECT * FROM employee"
+  query = `DELETE FROM employee WHERE trim(empId)="";`
+  await connection.query(query)
+  .then(async ()=>{
+    data = await connection.query(query1)
+    console.log(data)
+    res.send(data)
+   })
+  .catch((err)=>{res.send(err)})
+})
+
 module.exports = router;
